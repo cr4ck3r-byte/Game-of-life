@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game of life</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #myCanvas {
+            background-color: black;
+
+        }
+
+        #btnStop {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+
+        #btnReset {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: blue;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 20px;
+        }
+    </style>1
+</head>
+
+<body>
+    <button id="btnStop">Parar</button>
+    <button id="btnReset">Reiniciar</button>
+    <canvas id="myCanvas"></canvas>
+    <script>
+        myCanvas.width = window.innerWidth;
+        myCanvas.height = window.innerHeight;
+        const ctx = myCanvas.getContext("2d");
+        const cellSize = 10;
+        let isStop = false;
+        const btnStop = document.getElementById('btnStop');
+        const btnReset = document.getElementById('btnReset');
+        btnReset.addEventListener('click', () => life.reset())
+        btnStop.addEventListener('click', () => {
+            isStop = !isStop
+            if (isStop) {
+                btnStop.innerText = 'Continuar'
+                btnStop.style.backgroundColor = 'green'
+            }
+            else {
+                btnStop.innerText = 'Parar'
+                btnStop.style.backgroundColor = 'red'
+            }
+
+        })
+
+        class Life {
+            constructor(width, height, ctx, cellSize = 10) {
+                this.width = width
+                this.height = height
+                this.ctx = ctx
+                this.cellSize = cellSize;  // Tamaño de cada celda
+                this.cells = []
+            }
+
+            init() {
+                for (let i = 0; i < myCanvas.width; i++) {
+                    let row = []
+                    for (let j = 0; j < myCanvas.height; j++) {
+                        const alive = Math.random() * 10 < 0.5
+                        row.push((alive))
+                    }
+                    this.cells.push(row)
+                }
+
+            }
+
+            drawCell() {
+                this.ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+                this.drawGrid();
+                for (let i = 0; i < this.cells.length; i++) {
+                    for (let j = 0; j < this.cells[i].length; j++) {
+                        if (this.cells[i][j]) {
+                            this.ctx.fillStyle = '#fff'
+                            this.ctx.fillRect(i * this.cellSize, j * this.cellSize, this.cellSize, this.cellSize)
+                        }
+                    }
+                }
+            }
+
+            evaluate() {
+                for (let i = 0; i < this.cells.length; i++) {
+                    for (let j = 0; j < this.cells[i].length; j++) {
+                        const aliveNeighbors = this.countAliveNeighbor(i, j)
+                        if (this.cells[i][j]) {
+                            if (aliveNeighbors === 2 || aliveNeighbors === 3) this.cells[i][j] = true
+                            if (aliveNeighbors > 3 || aliveNeighbors < 2) this.cells[i][j] = false
+                        } else {
+                            if (aliveNeighbors === 3) this.cells[i][j] = true
+                        }
+                    }
+                }
+            }
+
+            countAliveNeighbor(row, col) {
+                let aliveNeighbors = 0;
+
+                // Definimos las ocho direcciones posibles para los vecinos
+                const directions = [
+                    [-1, 0], [1, 0], [0, -1], [0, 1],
+                    [-1, -1], [-1, 1], [1, -1], [1, 1]
+                ];
+
+                directions.forEach(([dx, dy]) => {
+                    const newRow = row + dx;
+                    const newCol = col + dy;
+
+                    if (newRow >= 0 && newRow < this.cells.length &&
+                        newCol >= 0 && newCol < this.cells[0].length &&
+                        this.cells[newRow][newCol]) {
+                        aliveNeighbors++;
+                    }
+                });
+
+                return aliveNeighbors;
+            }
+
+            drawGrid() {
+                this.ctx.strokeStyle = '#555';
+                for (let i = 0; i <= this.width; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i * this.cellSize, 0);
+                    this.ctx.lineTo(i * this.cellSize, this.height * this.cellSize);
+                    this.ctx.stroke();
+                }
+                for (let j = 0; j <= this.height; j++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, j * this.cellSize);
+                    this.ctx.lineTo(this.width * this.cellSize, j * this.cellSize);
+                    this.ctx.stroke();
+                }
+            }
+
+            toggleCell(x, y) {
+                this.cells[x][y] = !this.cells[x][y]
+                this.drawCell()
+            }
+
+            reset() {
+                this.ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+                this.drawGrid();
+                this.cells.forEach(row => row.fill(false))
+            }
+
+        }
+
+        const life = new Life(myCanvas.width, myCanvas.height, ctx, cellSize)
+        life.init()
+
+        myCanvas.addEventListener('click', (e) => {
+            const rect = myCanvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / cellSize);
+            const y = Math.floor((e.clientY - rect.top) / cellSize);
+            life.toggleCell(x, y)
+        })
+
+        function animate() {
+            life.drawCell()
+            life.evaluate()
+
+            // requestAnimationFrame(animate)
+        }
+        // animate()
+        setInterval(() => {
+            isStop ? null : animate()
+        }, 100)
+
+
+
+
+
+    </script>
+</body>
+
+
+</html>
